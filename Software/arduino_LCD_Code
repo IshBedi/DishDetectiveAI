@@ -1,0 +1,65 @@
+#include <LiquidCrystal.h>
+
+// LiquidCrystal(rs, enable, d4, d5, d6, d7)
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+
+const char* roommates[] = {
+  "Jasraj",
+  "Kaanan",
+  "Arjan",
+  "Naiyar",
+  "Ish",
+  "Aryan"
+};
+
+const int NUM_ROOMMATES = 6;
+int dishCounts[NUM_ROOMMATES] = {0};
+
+String inputLine = "";
+
+int findRoommateIndex(const String& name) {
+  for (int i = 0; i < NUM_ROOMMATES; i++) {
+    if (name.equalsIgnoreCase(roommates[i])) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+void showRoommate(int idx) {
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(roommates[idx]);
+  lcd.setCursor(0, 1);
+  lcd.print("Dishes Left: ");
+  lcd.print(dishCounts[idx]);
+}
+
+void setup() {
+  Serial.begin(9600);
+  lcd.begin(16, 2);
+
+  lcd.setCursor(0, 0);
+  lcd.print("Waiting...");
+}
+
+void loop() {
+  // Read incoming serial text
+  while (Serial.available() > 0) {
+    char c = Serial.read();
+
+    if (c == '\n' || c == '\r') {
+      inputLine.trim();
+      if (inputLine.length() > 0) {
+        int idx = findRoommateIndex(inputLine);
+        if (idx != -1) {
+          dishCounts[idx]++;
+          showRoommate(idx);
+        }
+      }
+      inputLine = "";
+    } else {
+      inputLine += c;
+    }
+  }
+}
