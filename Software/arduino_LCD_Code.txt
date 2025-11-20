@@ -17,6 +17,14 @@ int dishCounts[NUM_ROOMMATES] = {0};
 
 String inputLine = "";
 
+// Switch pin and LED pin
+const int SWITCH_PIN = 8;
+const int LED_PIN = 13;
+int lastSwitchState = HIGH;
+
+// Track current roommate
+int currentIndex = 0;
+
 int findRoommateIndex(const String& name) {
   for (int i = 0; i < NUM_ROOMMATES; i++) {
     if (name.equalsIgnoreCase(roommates[i])) {
@@ -35,16 +43,38 @@ void showRoommate(int idx) {
   lcd.print(dishCounts[idx]);
 }
 
+// Carousel with LED ON during entire loop
+void runCarousel(int startIndex) {
+
+  digitalWrite(LED_PIN, HIGH);  // turn LED on
+
+  int index = startIndex;
+
+  for (int step = 0; step < NUM_ROOMMATES; step++) {
+    showRoommate(index);
+    delay(1000);
+    index = (index + 1) % NUM_ROOMMATES;
+  }
+
+  showRoommate(startIndex);
+
+  digitalWrite(LED_PIN, LOW);  // turn LED off
+}
+
 void setup() {
   Serial.begin(9600);
   lcd.begin(16, 2);
+
+  pinMode(SWITCH_PIN, INPUT_PULLUP);
+  pinMode(LED_PIN, OUTPUT);
 
   lcd.setCursor(0, 0);
   lcd.print("Waiting...");
 }
 
 void loop() {
-  // Read incoming serial text
+
+  // SERIAL INPUT HANDLING
   while (Serial.available() > 0) {
     char c = Serial.read();
 
@@ -54,6 +84,7 @@ void loop() {
         int idx = findRoommateIndex(inputLine);
         if (idx != -1) {
           dishCounts[idx]++;
+          currentIndex = idx;
           showRoommate(idx);
         }
       }
@@ -62,4 +93,14 @@ void loop() {
       inputLine += c;
     }
   }
+
+  // BUTTON HANDLING
+  int switchState = digitalRead(SWITCH_PIN);
+
+  // Detect HIGH → LOW (button press)
+  if (lastSwitchState == HIGH && switchState == LOW) {
+    runCarousel(currentIndex);
+  }
+
+  lastSwitchState = switchState;
 }

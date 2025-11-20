@@ -1,8 +1,9 @@
 import serial
 import time
+import os
 
-FILENAME = 'names.txt'
-PORT = 'COM3'   # change to your actual Arduino port
+FILENAME = os.path.join(os.path.dirname(__file__), 'names.txt')
+PORT = 'COM5'   # change to your actual Arduino port
 BAUD = 9600
 
 def read_names_from_file(filename):
